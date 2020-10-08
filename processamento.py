@@ -1,3 +1,6 @@
+# DOCUMENTAÇÃO DO PYTHON IMAP4
+# https://docs.python.org/2/library/imaplib.html#imaplib.IMAP4.select
+
 import imaplib
 import base64
 import os
