@@ -11,12 +11,14 @@ import time
 import threading
 
 # credenciais
-email_user = 'email_aqui'
-email_pass = 'senha_aqui'
+email_user = 'email'
+email_pass = 'senha'
 
 # Cira um diretorio caso nao haja
-detach_dir = './pasta'
-# cria uma pasta caso nao tenha
+# windows
+detach_dir = './backend/uploads'
+# linux
+# detach_dir = 'uploads'
 # if './backend/nome_pasta' not in os.listdir(detach_dir):
 #     os.mkdir('./backend/nome_pasta')
 
@@ -25,17 +27,15 @@ mail = imaplib.IMAP4_SSL("Outlook.office365.com", 993)
 # realiza o login
 mail.login(email_user, email_pass)
 # acessa emails na caixa de entrada
-print(mail.list())
-# encontra emails dentro de uma pasta
-# mudar para INBOX caso queira trazer direto da caixa de entrada
-# mail.select('INBOX')
-mail.select('"NOME DA PASTA INTERNA"')
-remetente = ["email_remetente"]
+# print(mail.list())
+mail.select('"Nome da pasta"')
+# mail.select('ALL')
+remetente = ["email@email.com"]
 
-def downloadFromEmail(remetente, dataAtual):
-    print(remetente)
+def downloadFromEmail(remetente, dataMesPassado, mesAtual):
+    print(remetente, ' Desde ', dataMesPassado, ' Até ', mesAtual)
     # seleciona emails de um único remetente ou de todos 'ALL'
-    typ, data = mail.search(None, f'(FROM "{remetente}") (SINCE "01-Aug-2020")')
+    typ, data = mail.search(None, f'(FROM "{remetente}") (SINCE "{dataMesPassado}") (BEFORE "{mesAtual}")')
     # recupera os ids dos emails
     mail_ids = data[0]
     # cria uma lista de ids
@@ -77,25 +77,32 @@ def downloadFromEmail(remetente, dataAtual):
                     # caso haja arquivos com nomes iguais esta linha corrige adicionando o datetime
                     not_special_char = not_special_char
                     # junta o nome do arquivo com sua respectiva extensao
-                    filePath = os.path.join(detach_dir, './uploads', not_special_char + '.' + explod_file[1] + '.ZIP')
+                    # windows
+                    filePath = detach_dir + '/' + not_special_char + '.' + explod_file[1] + '.ZIP'
+                    # linux
+                    # filePath = detach_dir + '/' + not_special_char + '.' + explod_file[1] + '.z'
                     #caso nao exista o arquivo no caminho indicado, segue
                     if not os.path.isfile(filePath):
                         # baixa o arquivo
                         fp = open(filePath, "wb")
                         # decodifica para a extensao do arquivo
                         fp.write(part.get_payload(decode=True))
+                        print('Arquivo baixado com sucesso!', filePath)
                         # fecha a decodificacao e arquivo
                         fp.close()
+                    else:
+                        print('Arquivo já existente', filePath)
 
 
 now = datetime.now()
-
+last_month = int(str(datetime.now())[5:7]) - 1
 dt = now.strftime("%d-Dec-%Y")
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 hour = int(dt_string[11:13])
 month = ['Jan', 'Feb', 'Mar', 'Apr', "May", "Jun", 'Jul','Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 mes = int(now.strftime("%m"))
-dt = now.strftime(f"%d-{month[mes-1]}-%Y")
+dt = now.strftime(f"01-{month[last_month - 1]}-%Y")
+ldt = now.strftime(f"28-{month[last_month]}-%Y")
 
 def setInterval(func,time):
     e = threading.Event()
@@ -103,11 +110,11 @@ def setInterval(func,time):
         func()
 
 def foo():
-    if hour == 12 or hour == 23:
+    if hour == 4 or hour == 12 or hour == 16 or hour == 22:
         print('Hora da Verificação no Email!')
         for i in remetente:
-            downloadFromEmail(i, dt)
+            downloadFromEmail(i, dt, ldt)
     else:
-        print('A verificação no servidor acontecerá sempre às 12:00 e 23:00')
+        print('A verificação no servidor acontecerá sempre às 04:00, 12:00, 14:00 e 22:00')
 
-setInterval(foo, 1800)
+setInterval(foo, 10)
